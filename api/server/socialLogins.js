@@ -51,14 +51,19 @@ const configureSocialLogins = async (app) => {
       saveUninitialized: false,
       store: getLogStores(CacheKeys.OPENID_SESSION),
     };
+    
     app.use(session(sessionOptions));
     app.use(passport.session());
-    const config = await setupOpenId();
-    if (isEnabled(process.env.OPENID_REUSE_TOKENS)) {
+    
+    const config = await setupOpenId();    
+    if (config && isEnabled(process.env.OPENID_REUSE_TOKENS)) {      
+      // Only register the strategy if setupOpenId succeeded
       logger.info('OpenID token reuse is enabled.');
       passport.use('openidJwt', openIdJwtLogin(config));
+      logger.info('OpenID Connect configured successfully.');
+    } else {
+      logger.error('OpenID Connect configuration failed - strategy not registered.');
     }
-    logger.info('OpenID Connect configured.');
   }
   if (
     process.env.SAML_ENTRY_POINT &&
